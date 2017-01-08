@@ -107,11 +107,6 @@ public class ListBox extends AbstractProcessor {
 
     @Override
     public void onTrigger(final ProcessContext context, final ProcessSession session) throws ProcessException {
-        FlowFile flowFile = session.get();
-        if ( flowFile == null ) {
-            return;
-        }
-
         // Call box api to list files in folder given
         // Create flow file for each file found with the file path + name as attributes
         String token = context.getProperty(DEVELOPER_TOKEN).toString();
