@@ -69,7 +69,7 @@ public class ListBox extends AbstractProcessor {
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
-    public static final Relationship SUCCESS = new Relationship.Builder()
+    public static final Relationship REL_SUCCESS = new Relationship.Builder()
             .name("SUCCESS")
             .description("All FlowFiles that are received are routed to success")
             .build();
@@ -82,10 +82,11 @@ public class ListBox extends AbstractProcessor {
     protected void init(final ProcessorInitializationContext context) {
         final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
         descriptors.add(INPUT_DIRECTORY);
+        descriptors.add(DEVELOPER_TOKEN);
         this.descriptors = Collections.unmodifiableList(descriptors);
 
         final Set<Relationship> relationships = new HashSet<Relationship>();
-        relationships.add(SUCCESS);
+        relationships.add(REL_SUCCESS);
         this.relationships = Collections.unmodifiableSet(relationships);
     }
 
@@ -115,14 +116,6 @@ public class ListBox extends AbstractProcessor {
         // Create flow file for each file found with the file path + name as attributes
         String token = context.getProperty(DEVELOPER_TOKEN).toString();
         BoxAPIConnection api = new BoxAPIConnection(token);
-
-        BoxUser.Info userInfo = BoxUser.getCurrentUser(api).getInfo();
-        System.out.format("Welcome, %s <%s>!\n\n", userInfo.getName(), userInfo.getLogin());
-
-        //        BoxFolder rootFolder = BoxFolder.getRootFolder(api);
-        //        listFolder(rootFolder, 0);
-
-        BoxFile file = null;
         BoxFolder folder = new BoxFolder(api, "16169135715");
 
         try {
