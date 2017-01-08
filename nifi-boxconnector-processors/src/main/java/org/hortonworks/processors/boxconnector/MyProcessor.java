@@ -47,17 +47,25 @@ import java.util.Set;
 @WritesAttributes({@WritesAttribute(attribute="", description="")})
 public class MyProcessor extends AbstractProcessor {
 
-    public static final PropertyDescriptor Input_Directory = new PropertyDescriptor
-            .Builder().name("MY_PROPERTY")
-            .displayName("My property")
-            .description("Example Property")
+    public static final PropertyDescriptor INPUT_DIRECTORY = new PropertyDescriptor
+            .Builder().name("INPUT_DIRECTORY")
+            .displayName("Input Directory")
+            .description("Directory to search for files")
             .required(true)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
-    public static final Relationship MY_RELATIONSHIP = new Relationship.Builder()
-            .name("MY_RELATIONSHIP")
-            .description("Example relationship")
+    public static final PropertyDescriptor DEVELOPER_TOKEN  = new PropertyDescriptor
+            .Builder().name("DEVELOPER_TOKEN")
+            .displayName("Developer Token")
+            .description("Token used to connect to Box")
+            .required(true)
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
+
+    public static final Relationship SUCCESS = new Relationship.Builder()
+            .name("SUCCESS")
+            .description("All FlowFiles that are received are routed to success")
             .build();
 
     private List<PropertyDescriptor> descriptors;
@@ -67,11 +75,11 @@ public class MyProcessor extends AbstractProcessor {
     @Override
     protected void init(final ProcessorInitializationContext context) {
         final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
-        descriptors.add(Input_Directory);
+        descriptors.add(INPUT_DIRECTORY);
         this.descriptors = Collections.unmodifiableList(descriptors);
 
         final Set<Relationship> relationships = new HashSet<Relationship>();
-        relationships.add(MY_RELATIONSHIP);
+        relationships.add(SUCCESS);
         this.relationships = Collections.unmodifiableSet(relationships);
     }
 
