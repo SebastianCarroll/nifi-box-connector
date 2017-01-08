@@ -45,7 +45,7 @@ import java.util.Set;
 @SeeAlso({})
 @ReadsAttributes({@ReadsAttribute(attribute="", description="")})
 @WritesAttributes({@WritesAttribute(attribute="", description="")})
-public class MyProcessor extends AbstractProcessor {
+public class ListBox extends AbstractProcessor {
 
     public static final PropertyDescriptor INPUT_DIRECTORY = new PropertyDescriptor
             .Builder().name("INPUT_DIRECTORY")
@@ -104,6 +104,8 @@ public class MyProcessor extends AbstractProcessor {
         if ( flowFile == null ) {
             return;
         }
-        // TODO implement
+
+        // Call box api to list files in folder given
+        // Create flow file for each file found with the file path + name as content
     }
 }
