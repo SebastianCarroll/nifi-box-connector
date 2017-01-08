@@ -107,6 +107,7 @@ public class ListBox extends AbstractProcessor {
 
     @Override
     public void onTrigger(final ProcessContext context, final ProcessSession session) throws ProcessException {
+
         // Call box api to list files in folder given
         // Create flow file for each file found with the file path + name as attributes
         String token = context.getProperty(DEVELOPER_TOKEN).toString();
@@ -117,24 +118,22 @@ public class ListBox extends AbstractProcessor {
             for (BoxItem.Info itemInfo : folder) {
                 if (itemInfo instanceof BoxFile.Info) {
                     BoxFile.Info fileInfo = (BoxFile.Info) itemInfo;
-                    // Do something with the file.
-                    System.out.println("File:" + fileInfo.getCreatedAt() + "," +
-                            fileInfo.getDescription() + "," +
-                            fileInfo.getExtension() + ",name=" +
-                            fileInfo.getName() + ",id=" +
-                            fileInfo.getID() + "," +
-                            fileInfo.getCreatedBy() + "," +
-                            fileInfo.getSize() + "," +
-                            fileInfo.getVersion().getName() + "," +
-                            fileInfo.getCreatedAt() + "," +
-                            fileInfo.getModifiedAt() + "," +
-                            fileInfo.getModifiedBy() +
-                            "");
+
+                    FlowFile flowFile = session.create();
+                    flowFile = session.putAttribute(flowFile, "path", getPath(fileInfo));
+                    flowFile = session.putAttribute(flowFile, "filename", fileInfo.getName());
+                    session.transfer(flowFile, REL_SUCCESS);
                 }
             }
         } catch (Exception e) {
+            // TODO: Handle Failure here
             e.printStackTrace();
             System.out.println("Folder not found");
         }
+    }
+
+    private String getPath(BoxFile.Info fileInfo){
+        //TODO: Fill out this. Will probably require call to getPathCollection and then map/join that to sting path
+        return "";
     }
 }
