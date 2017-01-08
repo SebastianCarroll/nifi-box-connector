@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.box.sdk.BoxAPIConnection;
 import com.box.sdk.BoxFile;
@@ -133,7 +134,9 @@ public class ListBox extends AbstractProcessor {
     }
 
     private String getPath(BoxFile.Info fileInfo){
-        //TODO: Fill out this. Will probably require call to getPathCollection and then map/join that to sting path
-        return "";
+        return fileInfo.getPathCollection()
+                .stream()
+                .map(folder -> folder.getName())
+                .collect(Collectors.joining("/"));
     }
 }
