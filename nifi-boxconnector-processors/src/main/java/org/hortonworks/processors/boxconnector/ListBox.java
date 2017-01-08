@@ -40,6 +40,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.box.sdk.BoxAPIConnection;
+import com.box.sdk.BoxFile;
+import com.box.sdk.BoxFolder;
+import com.box.sdk.BoxItem;
+import com.box.sdk.BoxUser;
+
 @Tags({"example"})
 @CapabilityDescription("Provide a description")
 @SeeAlso({})
@@ -106,6 +112,41 @@ public class ListBox extends AbstractProcessor {
         }
 
         // Call box api to list files in folder given
-        // Create flow file for each file found with the file path + name as content
+        // Create flow file for each file found with the file path + name as attributes
+        String token = context.getProperty(DEVELOPER_TOKEN).toString();
+        BoxAPIConnection api = new BoxAPIConnection(token);
+
+        BoxUser.Info userInfo = BoxUser.getCurrentUser(api).getInfo();
+        System.out.format("Welcome, %s <%s>!\n\n", userInfo.getName(), userInfo.getLogin());
+
+        //        BoxFolder rootFolder = BoxFolder.getRootFolder(api);
+        //        listFolder(rootFolder, 0);
+
+        BoxFile file = null;
+        BoxFolder folder = new BoxFolder(api, "16169135715");
+
+        try {
+            for (BoxItem.Info itemInfo : folder) {
+                if (itemInfo instanceof BoxFile.Info) {
+                    BoxFile.Info fileInfo = (BoxFile.Info) itemInfo;
+                    // Do something with the file.
+                    System.out.println("File:" + fileInfo.getCreatedAt() + "," +
+                            fileInfo.getDescription() + "," +
+                            fileInfo.getExtension() + ",name=" +
+                            fileInfo.getName() + ",id=" +
+                            fileInfo.getID() + "," +
+                            fileInfo.getCreatedBy() + "," +
+                            fileInfo.getSize() + "," +
+                            fileInfo.getVersion().getName() + "," +
+                            fileInfo.getCreatedAt() + "," +
+                            fileInfo.getModifiedAt() + "," +
+                            fileInfo.getModifiedBy() +
+                            "");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Folder not found");
+        }
     }
 }
