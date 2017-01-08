@@ -1,0 +1,17 @@
+// ------------------------------------------------------------------
+// Transitive dependencies of this project determined from the
+// maven pom organized by organization.
+// ------------------------------------------------------------------
+
+nifi-boxconnector-nar
+
+
+From: 'Apache NiFi Project' (http://nifi.apache.org/)
+  - nifi-utils (http://nifi.apache.org/nifi-commons/nifi-utils) org.apache.nifi:nifi-utils:jar:1.1.1
+    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
+  - nifi-boxconnector-processors (http://nifi.apache.org/nifi-nar-bundles/nifi-box-connector/nifi-boxconnector-processors) org.hortonworks:nifi-boxconnector-processors:jar:1.0-SNAPSHOT
+    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
+
+
+
+
