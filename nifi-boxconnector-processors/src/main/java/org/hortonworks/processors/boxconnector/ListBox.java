@@ -26,6 +26,7 @@ import org.apache.nifi.annotation.lifecycle.OnScheduled;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.documentation.SeeAlso;
 import org.apache.nifi.annotation.documentation.Tags;
+import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.AbstractProcessor;
 import org.apache.nifi.processor.ProcessContext;
@@ -54,6 +55,8 @@ import com.box.sdk.BoxUser;
 @WritesAttributes({@WritesAttribute(attribute="", description="")})
 public class ListBox extends AbstractProcessor {
 
+    private ComponentLog logger;
+
     public static final PropertyDescriptor INPUT_DIRECTORY = new PropertyDescriptor
             .Builder().name("INPUT_DIRECTORY")
             .displayName("Input Directory")
@@ -81,6 +84,8 @@ public class ListBox extends AbstractProcessor {
 
     @Override
     protected void init(final ProcessorInitializationContext context) {
+        logger = context.getLogger();
+
         final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
         descriptors.add(INPUT_DIRECTORY);
         descriptors.add(DEVELOPER_TOKEN);
@@ -121,22 +126,14 @@ public class ListBox extends AbstractProcessor {
                     BoxFile.Info fileInfo = (BoxFile.Info) itemInfo;
 
                     FlowFile flowFile = session.create();
-                    flowFile = session.putAttribute(flowFile, "path", getPath(fileInfo));
+                    flowFile = session.putAttribute(flowFile, "id", fileInfo.getID());
                     flowFile = session.putAttribute(flowFile, "filename", fileInfo.getName());
                     session.transfer(flowFile, REL_SUCCESS);
                 }
             }
         } catch (Exception e) {
-            // TODO: Handle Failure here
-            e.printStackTrace();
-            System.out.println("Folder not found");
+            logger.error("Folder not found " + e.toString());
+            session.rollback();
         }
-    }
-
-    private String getPath(BoxFile.Info fileInfo){
-        return fileInfo.getPathCollection()
-                .stream()
-                .map(folder -> folder.getName())
-                .collect(Collectors.joining("/"));
     }
 }
