@@ -57,10 +57,10 @@ public class ListBox extends AbstractProcessor {
 
     private ComponentLog logger;
 
-    public static final PropertyDescriptor INPUT_DIRECTORY = new PropertyDescriptor
-            .Builder().name("INPUT_DIRECTORY")
-            .displayName("Input Directory")
-            .description("Directory to search for files")
+    public static final PropertyDescriptor INPUT_DIRECTORY_ID = new PropertyDescriptor
+            .Builder().name("INPUT_DIRECTORY_ID")
+            .displayName("Input Directory ID")
+            .description("Directory to search for files (Referenced by the Box ID")
             .required(true)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
@@ -87,7 +87,7 @@ public class ListBox extends AbstractProcessor {
         logger = context.getLogger();
 
         final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
-        descriptors.add(INPUT_DIRECTORY);
+        descriptors.add(INPUT_DIRECTORY_ID);
         descriptors.add(DEVELOPER_TOKEN);
         this.descriptors = Collections.unmodifiableList(descriptors);
 
@@ -118,7 +118,7 @@ public class ListBox extends AbstractProcessor {
         // Create flow file for each file found with the file path + name as attributes
         String token = context.getProperty(DEVELOPER_TOKEN).toString();
         BoxAPIConnection api = new BoxAPIConnection(token);
-        BoxFolder folder = new BoxFolder(api, "16169135715");
+        BoxFolder folder = new BoxFolder(api, context.getProperty(INPUT_DIRECTORY_ID).toString());
 
         try {
             for (BoxItem.Info itemInfo : folder) {
