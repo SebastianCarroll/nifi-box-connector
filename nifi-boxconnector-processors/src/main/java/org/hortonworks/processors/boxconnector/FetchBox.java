@@ -33,8 +33,10 @@ import org.apache.nifi.processor.ProcessContext;
 import org.apache.nifi.processor.ProcessSession;
 import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processor.Relationship;
+import org.apache.nifi.processor.io.OutputStreamCallback;
 import org.apache.nifi.processor.util.StandardValidators;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -119,9 +121,30 @@ public class FetchBox extends AbstractProcessor {
 
     @Override
     public void onTrigger(final ProcessContext context, final ProcessSession session) throws ProcessException {
-        final FlowFile flowFile = session.get();
+        FlowFile flowFile = session.get();
         if (flowFile == null) {
             return;
+        }
+
+        try {
+            String token = context.getProperty(DEVELOPER_TOKEN).toString();
+            BoxAPIConnection api = new BoxAPIConnection(token);
+            String file_id = context.getProperty(FILE_TO_FETCH).evaluateAttributeExpressions(flowFile).getValue();
+            BoxFile file = new BoxFile(api, file_id);
+
+            flowFile = session.write(flowFile, new OutputStreamCallback() {
+                @Override
+                public void process(final OutputStream out) throws IOException {
+                    file.download(out);
+                }
+            });
+
+            file.delete();
+
+            session.transfer(flowFile, REL_SUCCESS);
+        } catch(Exception e){
+            logger.error("Processing failed " + e.toString());
+            session.transfer(flowFile, REL_FAILURE);
         }
     }
 }
