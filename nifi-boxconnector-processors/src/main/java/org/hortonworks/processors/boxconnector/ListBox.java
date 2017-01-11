@@ -34,6 +34,7 @@ import org.apache.nifi.processor.ProcessSession;
 import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processor.Relationship;
 import org.apache.nifi.processor.util.StandardValidators;
+import org.apache.nifi.distributed.cache.client.DistributedMapCacheClient;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,6 +74,14 @@ public class ListBox extends AbstractProcessor {
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
+    public static final PropertyDescriptor DISTRIBUTED_CACHE_SERVICE = new PropertyDescriptor.Builder()
+            .name("Distributed Cache Service")
+            .description("Specifies the Controller Service that should be used to maintain state about what has been pulled from HDFS so that if a new node "
+                    + "begins pulling data, it won't duplicate all of the work that has been done.")
+            .required(false)
+            .identifiesControllerService(DistributedMapCacheClient.class)
+            .build();
+
     public static final Relationship REL_SUCCESS = new Relationship.Builder()
             .name("SUCCESS")
             .description("All FlowFiles that are received are routed to success")
@@ -89,6 +98,7 @@ public class ListBox extends AbstractProcessor {
         final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
         descriptors.add(INPUT_DIRECTORY_ID);
         descriptors.add(DEVELOPER_TOKEN);
+        descriptors.add(DISTRIBUTED_CACHE_SERVICE);
         this.descriptors = Collections.unmodifiableList(descriptors);
 
         final Set<Relationship> relationships = new HashSet<Relationship>();
@@ -113,9 +123,6 @@ public class ListBox extends AbstractProcessor {
 
     @Override
     public void onTrigger(final ProcessContext context, final ProcessSession session) throws ProcessException {
-
-        // Call box api to list files in folder given
-        // Create flow file for each file found with the file path + name as attributes
         String token = context.getProperty(DEVELOPER_TOKEN).toString();
         BoxAPIConnection api = new BoxAPIConnection(token);
         BoxFolder folder = new BoxFolder(api, context.getProperty(INPUT_DIRECTORY_ID).toString());
