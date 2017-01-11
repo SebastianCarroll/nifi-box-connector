@@ -14,3 +14,4 @@
 # limitations under the License.
 org.hortonworks.processors.boxconnector.ListBox
 org.hortonworks.processors.boxconnector.FetchBox
+org.hortonworks.processors.boxconnector.PutBox
