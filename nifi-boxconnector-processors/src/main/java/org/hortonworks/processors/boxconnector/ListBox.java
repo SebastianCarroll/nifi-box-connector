@@ -17,6 +17,7 @@
 package org.hortonworks.processors.boxconnector;
 
 import org.apache.nifi.components.PropertyDescriptor;
+import org.apache.nifi.components.state.Scope;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.annotation.behavior.ReadsAttribute;
 import org.apache.nifi.annotation.behavior.ReadsAttributes;
@@ -34,13 +35,11 @@ import org.apache.nifi.processor.ProcessSession;
 import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processor.Relationship;
 import org.apache.nifi.processor.util.StandardValidators;
-import org.apache.nifi.distributed.cache.client.DistributedMapCacheClient;
+import org.apache.nifi.processors.standard.util.FileInfo;
+import org.apache.nifi.processors.standard.AbstractListProcessor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.box.sdk.BoxAPIConnection;
@@ -54,7 +53,7 @@ import com.box.sdk.BoxUser;
 @SeeAlso({})
 @ReadsAttributes({@ReadsAttribute(attribute="", description="")})
 @WritesAttributes({@WritesAttribute(attribute="", description="")})
-public class ListBox extends AbstractProcessor {
+public class ListBox extends AbstractListProcessor<FileInfo> {
 
     private ComponentLog logger;
 
@@ -72,14 +71,6 @@ public class ListBox extends AbstractProcessor {
             .description("Token used to connect to Box")
             .required(true)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
-            .build();
-
-    public static final PropertyDescriptor DISTRIBUTED_CACHE_SERVICE = new PropertyDescriptor.Builder()
-            .name("Distributed Cache Service")
-            .description("Specifies the Controller Service that should be used to maintain state about what has been pulled from HDFS so that if a new node "
-                    + "begins pulling data, it won't duplicate all of the work that has been done.")
-            .required(false)
-            .identifiesControllerService(DistributedMapCacheClient.class)
             .build();
 
     public static final Relationship REL_SUCCESS = new Relationship.Builder()
@@ -142,5 +133,35 @@ public class ListBox extends AbstractProcessor {
             logger.error("Folder not found " + e.toString());
             session.rollback();
         }
+    }
+
+    @Override
+    protected Map<String, String> createAttributes(FileInfo fileInfo, ProcessContext processContext) {
+        return null;
+    }
+
+    @Override
+    protected String getPath(ProcessContext processContext) {
+        return null;
+    }
+
+    @Override
+    protected List<FileInfo> performListing(ProcessContext context, Long aLong) throws IOException {
+        String token = context.getProperty(DEVELOPER_TOKEN).toString();
+        BoxAPIConnection api = new BoxAPIConnection(token);
+        BoxFolder folder = new BoxFolder(api, context.getProperty(INPUT_DIRECTORY_ID).toString());
+
+        new FileInfo.Builder()
+        return null;
+    }
+
+    @Override
+    protected boolean isListingResetNecessary(PropertyDescriptor propertyDescriptor) {
+        return false;
+    }
+
+    @Override
+    protected Scope getStateScope(ProcessContext processContext) {
+        return null;
     }
 }

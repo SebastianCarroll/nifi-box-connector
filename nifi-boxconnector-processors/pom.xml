@@ -52,7 +52,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.nifi</groupId>
-            <artifactId>nifi-distributed-cache-client-service-api</artifactId>
+            <artifactId>nifi-standard-processors</artifactId>
+            <version>1.1.0</version>
         </dependency>
     </dependencies>
 </project>
