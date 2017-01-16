@@ -41,6 +41,7 @@ import org.apache.nifi.processors.standard.AbstractListProcessor;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.box.sdk.BoxAPIConnection;
 import com.box.sdk.BoxFile;
@@ -146,13 +147,12 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     }
 
     @Override
-    protected List<FileInfo> performListing(ProcessContext context, Long aLong) throws IOException {
+    protected List<FileInfo> performListing(ProcessContext context, Long minTimestamp) throws IOException {
         String token = context.getProperty(DEVELOPER_TOKEN).toString();
         BoxAPIConnection api = new BoxAPIConnection(token);
         BoxFolder folder = new BoxFolder(api, context.getProperty(INPUT_DIRECTORY_ID).toString());
 
-        new FileInfo.Builder()
-        return null;
+        return listBoxFolder(folder);
     }
 
     @Override
@@ -163,5 +163,17 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     @Override
     protected Scope getStateScope(ProcessContext processContext) {
         return null;
+    }
+
+    private List<FileInfo> listBoxFolder(BoxFolder folder) {
+        return StreamSupport
+                .stream(folder.spliterator(), false)
+                .map(file -> new FileInfo.Builder()
+                        .filename(file.getName())
+                        .size(file.getSize())
+                        .lastModifiedTime(file.getModifiedAt().getTime())
+                        .owner(file.getOwnedBy().getName())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
