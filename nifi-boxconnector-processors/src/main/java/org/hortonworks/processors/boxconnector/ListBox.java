@@ -114,29 +114,6 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     }
 
     @Override
-    public void onTrigger(final ProcessContext context, final ProcessSession session) throws ProcessException {
-        String token = context.getProperty(DEVELOPER_TOKEN).toString();
-        BoxAPIConnection api = new BoxAPIConnection(token);
-        BoxFolder folder = new BoxFolder(api, context.getProperty(INPUT_DIRECTORY_ID).toString());
-
-        try {
-            for (BoxItem.Info itemInfo : folder) {
-                if (itemInfo instanceof BoxFile.Info) {
-                    BoxFile.Info fileInfo = (BoxFile.Info) itemInfo;
-
-                    FlowFile flowFile = session.create();
-                    flowFile = session.putAttribute(flowFile, "id", fileInfo.getID());
-                    flowFile = session.putAttribute(flowFile, "filename", fileInfo.getName());
-                    session.transfer(flowFile, REL_SUCCESS);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Folder not found " + e.toString());
-            session.rollback();
-        }
-    }
-
-    @Override
     protected Map<String, String> createAttributes(FileInfo fileInfo, ProcessContext processContext) {
         return null;
     }
