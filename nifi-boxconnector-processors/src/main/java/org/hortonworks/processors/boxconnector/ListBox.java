@@ -125,10 +125,7 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
 
     @Override
     protected List<FileInfo> performListing(ProcessContext context, Long minTimestamp) throws IOException {
-        String token = context.getProperty(DEVELOPER_TOKEN).toString();
-        BoxAPIConnection api = new BoxAPIConnection(token);
-        BoxFolder folder = new BoxFolder(api, context.getProperty(INPUT_DIRECTORY_ID).toString());
-
+        BoxFolder folder = getFolder(context);
         return listBoxFolder(folder);
     }
 
@@ -140,6 +137,12 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     @Override
     protected Scope getStateScope(ProcessContext processContext) {
         return null;
+    }
+
+    protected BoxFolder getFolder(ProcessContext context) {
+        String token = context.getProperty(DEVELOPER_TOKEN).toString();
+        BoxAPIConnection api = new BoxAPIConnection(token);
+        return new BoxFolder(api, context.getProperty(INPUT_DIRECTORY_ID).toString());
     }
 
     private List<FileInfo> listBoxFolder(BoxFolder folder) {

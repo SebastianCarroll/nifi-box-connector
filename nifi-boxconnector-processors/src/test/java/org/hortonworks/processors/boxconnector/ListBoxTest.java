@@ -16,19 +16,29 @@
  */
 package org.hortonworks.processors.boxconnector;
 
+import com.box.sdk.*;
 import org.apache.nifi.util.TestRunner;
 import org.apache.nifi.util.TestRunners;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.apache.nifi.processor.ProcessContext;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class ListBoxTest {
 
     private TestRunner testRunner;
+    private ProcessContext context;
 
     @Before
     public void init() {
-        testRunner = TestRunners.newTestRunner(ListBox.class);
+        //testRunner = TestRunners.newTestRunner(ListBoxWithMockApi.class);
+        ListBoxWithMockApi box = new ListBoxWithMockApi();
+        testRunner = TestRunners.newTestRunner(box);
+        context = testRunner.getProcessContext();
     }
 
     @Test
@@ -36,4 +46,40 @@ public class ListBoxTest {
 
     }
 
+    @Test
+    public void testListBoxFolder() throws Exception {
+        testRunner.setProperty(ListBox.INPUT_DIRECTORY_ID, "10");
+        testRunner.setProperty(ListBox.DEVELOPER_TOKEN, "10");
+        testRunner.run();
+        testRunner.assertTransferCount(ListBox.REL_SUCCESS, 0);
+    }
+
+    private class ListBoxWithMockApi extends ListBox {
+        @Override
+        protected BoxFolder getFolder(ProcessContext context) {
+            String token = context.getProperty(DEVELOPER_TOKEN).toString();
+            BoxAPIConnection api = new BoxAPIConnection(token);
+            return new MockBoxFolder(api, token);
+        }
+    }
+
+    private class MockBoxFolder extends BoxFolder {
+        public MockBoxFolder(BoxAPIConnection api, String dirId){
+            super(api, dirId);
+        }
+
+        @Override
+        public Iterator<BoxItem.Info> iterator() {
+            List<BoxItem.Info> files = new ArrayList<>();
+            BoxItem.Info bo = new BoxItem.Info() {
+                @Override
+                public BoxResource getResource() {
+                    return null;
+                };
+            };
+
+            files.add(bo);
+            return files.iterator();
+        }
+    }
 }
