@@ -180,23 +180,17 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
         }
 
         private long getModTime() {
-            List<Date> dates = new ArrayList<Date>();
-            dates.add(file.getContentCreatedAt());
-            dates.add(file.getContentModifiedAt());
-            dates.add(file.getCreatedAt());
-            dates.add(file.getModifiedAt());
+            Date[] dates = {
+                    file.getContentCreatedAt(),
+                    file.getContentModifiedAt(),
+                    file.getCreatedAt(),
+                    file.getModifiedAt()};
 
-            long max = 0l;
-
-            for(Date d : dates){
-                if(d == null){
-                    continue;
-                } else {
-                    long cur = d.getTime();
-                    max = (cur > max) ? cur : max;
-                }
-            }
-            return max;
+            return Arrays.stream(dates)
+                    .filter(d -> (d != null))
+                    .map(d -> d.getTime())
+                    .max(Long::compareTo)
+                    .orElse(0l);
         }
     }
 }
