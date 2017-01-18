@@ -148,12 +148,8 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     private List<FileInfo> listBoxFolder(BoxFolder folder) {
         return StreamSupport
                 .stream(folder.spliterator(), false)
-                .map(file -> boxItemToInfo(file))
+                .map(file -> new FileConverter(file).build())
                 .collect(Collectors.toList());
-    }
-
-    private FileInfo boxItemToInfo(BoxItem.Info file){
-        return new FileConverter(file).build();
     }
 
     /**
