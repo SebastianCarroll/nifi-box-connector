@@ -180,12 +180,23 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
         }
 
         private long getModTime() {
-            Date modDate = file.getContentModifiedAt();
-            // TODO: Is this a good default here?
-            // Seems like it is as all files with no modTime will get filtered out
-            // Unless modtime is null until content is actuallly modified
-            // Then would need to consider created time
-            return (modDate == null) ? 0 : modDate.getTime();
+            List<Date> dates = new ArrayList<Date>();
+            dates.add(file.getContentCreatedAt());
+            dates.add(file.getContentModifiedAt());
+            dates.add(file.getCreatedAt());
+            dates.add(file.getModifiedAt());
+
+            long max = 0l;
+
+            for(Date d : dates){
+                if(d == null){
+                    continue;
+                } else {
+                    long cur = d.getTime();
+                    max = (cur > max) ? cur : max;
+                }
+            }
+            return max;
         }
     }
 }
