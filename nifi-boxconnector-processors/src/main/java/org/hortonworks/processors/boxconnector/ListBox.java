@@ -148,12 +148,48 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     private List<FileInfo> listBoxFolder(BoxFolder folder) {
         return StreamSupport
                 .stream(folder.spliterator(), false)
-                .map(file -> new FileInfo.Builder()
-                        .filename(file.getName())
-                        .size(file.getSize())
-                        .lastModifiedTime(file.getModifiedAt().getTime())
-                        .owner(file.getOwnedBy().getName())
-                        .build())
+                .map(file -> boxItemToInfo(file))
                 .collect(Collectors.toList());
+    }
+
+    private FileInfo boxItemToInfo(BoxItem.Info file){
+        return new FileConverter(file).build();
+    }
+
+    /**
+     * Helper class to encapsulate the difficulties of the
+     * BoxItem.Info class having null values
+     */
+    private class FileConverter {
+        private BoxItem.Info file;
+
+        public FileConverter(BoxItem.Info fileIn){
+            file = fileIn;
+        }
+
+        public FileInfo build(){
+            return new FileInfo.Builder()
+                    .filename(getName())
+                    .size(getSize())
+                    .lastModifiedTime(getModTime())
+                    .build();
+        }
+
+        private String getName(){
+            return file.getName();
+        }
+
+        private long getSize(){
+            return file.getSize();
+        }
+
+        private long getModTime() {
+            Date modDate = file.getContentModifiedAt();
+            // TODO: Is this a good default here?
+            // Seems like it is as all files with no modTime will get filtered out
+            // Unless modtime is null until content is actuallly modified
+            // Then would need to consider created time
+            return (modDate == null) ? 0 : modDate.getTime();
+        }
     }
 }

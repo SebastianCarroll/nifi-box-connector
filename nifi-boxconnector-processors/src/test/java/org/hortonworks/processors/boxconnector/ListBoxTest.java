@@ -72,6 +72,8 @@ public class ListBoxTest {
         public Iterator<BoxItem.Info> iterator() {
             List<BoxItem.Info> files = new ArrayList<>();
             BoxItem.Info bo = new BoxItem.Info() {
+
+                // Not sure why I have to overrid this method. Appears to work fine for testing without it
                 @Override
                 public BoxResource getResource() {
                     return null;
