@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.apache.nifi.processor.ProcessContext;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -51,7 +52,7 @@ public class ListBoxTest {
         testRunner.setProperty(ListBox.INPUT_DIRECTORY_ID, "10");
         testRunner.setProperty(ListBox.DEVELOPER_TOKEN, "10");
         testRunner.run();
-        testRunner.assertTransferCount(ListBox.REL_SUCCESS, 0);
+        testRunner.assertTransferCount(ListBox.REL_SUCCESS, 2);
     }
 
     private class ListBoxWithMockApi extends ListBox {
@@ -71,16 +72,63 @@ public class ListBoxTest {
         @Override
         public Iterator<BoxItem.Info> iterator() {
             List<BoxItem.Info> files = new ArrayList<>();
-            BoxItem.Info bo = new BoxItem.Info() {
 
-                // Not sure why I have to overrid this method. Appears to work fine for testing without it
+            BoxItem.Info bi_null = new BoxItem.Info() {
+                // Not sure why I have to override this method. Appears to work fine for testing without it
                 @Override
                 public BoxResource getResource() {
                     return null;
                 };
             };
+            files.add(bi_null);
 
-            files.add(bo);
+            BoxItem.Info b1 = new BoxItem.Info() {
+                // Not sure why I have to override this method. Appears to work fine for testing without it
+                @Override
+                public BoxResource getResource() {
+                    return null;
+                };
+
+                @Override
+                public Date getModifiedAt() {
+                    return new Date(1485786189);
+                }
+
+                @Override
+                public long getSize() {
+                    return 10l;
+                }
+
+                @Override
+                public String getName() {
+                    return "b1";
+                }
+            };
+            files.add(b1);
+
+            BoxItem.Info b2 = new BoxItem.Info() {
+                // Not sure why I have to override this method. Appears to work fine for testing without it
+                @Override
+                public BoxResource getResource() {
+                    return null;
+                };
+
+                @Override
+                public Date getModifiedAt() {
+                    return new Date(1485786190);
+                }
+
+                @Override
+                public long getSize() {
+                    return 11l;
+                }
+
+                @Override
+                public String getName() {
+                    return super.getName();
+                }
+            };
+            files.add(b2);
             return files.iterator();
         }
     }

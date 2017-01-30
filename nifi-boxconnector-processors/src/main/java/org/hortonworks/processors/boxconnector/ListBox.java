@@ -56,8 +56,6 @@ import com.box.sdk.BoxUser;
 @WritesAttributes({@WritesAttribute(attribute="", description="")})
 public class ListBox extends AbstractListProcessor<FileInfo> {
 
-    private ComponentLog logger;
-
     public static final PropertyDescriptor INPUT_DIRECTORY_ID = new PropertyDescriptor
             .Builder().name("INPUT_DIRECTORY_ID")
             .displayName("Input Directory ID")
@@ -74,48 +72,13 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
-    public static final Relationship REL_SUCCESS = new Relationship.Builder()
-            .name("SUCCESS")
-            .description("All FlowFiles that are received are routed to success")
-            .build();
-
-    private List<PropertyDescriptor> descriptors;
-
-    private Set<Relationship> relationships;
-
+    //////////////
+    // Overridden abstract methods
     @Override
-    protected void init(final ProcessorInitializationContext context) {
-        logger = context.getLogger();
-
-        final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
-        descriptors.add(INPUT_DIRECTORY_ID);
-        descriptors.add(DEVELOPER_TOKEN);
-        descriptors.add(DISTRIBUTED_CACHE_SERVICE);
-        this.descriptors = Collections.unmodifiableList(descriptors);
-
-        final Set<Relationship> relationships = new HashSet<Relationship>();
-        relationships.add(REL_SUCCESS);
-        this.relationships = Collections.unmodifiableSet(relationships);
-    }
-
-    @Override
-    public Set<Relationship> getRelationships() {
-        return this.relationships;
-    }
-
-    @Override
-    public final List<PropertyDescriptor> getSupportedPropertyDescriptors() {
-        return descriptors;
-    }
-
-    @OnScheduled
-    public void onScheduled(final ProcessContext context) {
-
-    }
-
-    @Override
-    protected Map<String, String> createAttributes(FileInfo fileInfo, ProcessContext processContext) {
-        return null;
+    protected Map<String, String> createAttributes(FileInfo fileInfo,
+                                                   ProcessContext processContext) {
+        // TODO: How to add the attributes here given I need info from the box folder
+        return new HashMap<>();
     }
 
     @Override
@@ -139,6 +102,19 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
         return null;
     }
 
+    //////////////
+    // Overridden Standard Methods
+    @Override
+    protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
+        final List<PropertyDescriptor> properties = new ArrayList<>();
+        properties.add(DISTRIBUTED_CACHE_SERVICE);
+        properties.add(INPUT_DIRECTORY_ID);
+        properties.add(DEVELOPER_TOKEN);
+        return properties;
+    }
+
+    //////////////
+    // Helper methods
     protected BoxFolder getFolder(ProcessContext context) {
         String token = context.getProperty(DEVELOPER_TOKEN).toString();
         BoxAPIConnection api = new BoxAPIConnection(token);
@@ -146,7 +122,10 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     }
 
     private List<FileInfo> listBoxFolder(BoxFolder folder) {
+        this.getLogger().debug("Listing box folder: {}", new Object[]{folder});
+
         return StreamSupport
+                // TODO: Do we want parallel := false?
                 .stream(folder.spliterator(), false)
                 .map(file -> new FileConverter(file).build())
                 .collect(Collectors.toList());
@@ -164,6 +143,10 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
         }
 
         public FileInfo build(){
+            // TODO: Add logger in this class
+            //this.getLogger().debug("Converted file: Name: {}, Size: {}, Modified: {} ",
+             //       new Object[]{getName(), getSize(), getModTime()});
+
             return new FileInfo.Builder()
                     .filename(getName())
                     .size(getSize())
