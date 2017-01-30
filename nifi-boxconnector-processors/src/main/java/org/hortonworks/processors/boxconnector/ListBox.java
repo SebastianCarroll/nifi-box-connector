@@ -124,49 +124,29 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     }
 
     private List<FileInfo> listBoxFolder(BoxFolder folder) {
-        // TODO: This logger is meaningless - will just output an class and number
-        this.getLogger().debug("Listing box folder: {}", new Object[]{folder});
-
         return StreamSupport
                 // TODO: Do we want parallel := false?
                 .stream(folder.spliterator(), false)
-                // TODO: Probably should be a class method
-                .map(file -> new FileConverter(file).build())
+                .map(file -> FileConverter.build(file))
                 .collect(Collectors.toList());
     }
 
     /**
      * Helper class to encapsulate the difficulties of the
      * BoxItem.Info class having null values
+     *
+     * TODO: Is there a way to denote all methods in a static class as static?
      */
-    private class FileConverter {
-        private BoxItem.Info file;
-
-        public FileConverter(BoxItem.Info fileIn){
-            file = fileIn;
-        }
-
-        public FileInfo build(){
-            // TODO: Add logger in this class
-            //this.getLogger().debug("Converted file: Name: {}, Size: {}, Modified: {} ",
-             //       new Object[]{getName(), getSize(), getModTime()});
-
+    private static class FileConverter {
+        public static FileInfo build(BoxItem.Info file){
             return new FileInfo.Builder()
-                    .filename(getName())
-                    .size(getSize())
-                    .lastModifiedTime(getModTime())
+                    .filename(file.getName())
+                    .size(file.getSize())
+                    .lastModifiedTime(getModTime(file))
                     .build();
         }
 
-        private String getName(){
-            return file.getName();
-        }
-
-        private long getSize(){
-            return file.getSize();
-        }
-
-        private long getModTime() {
+        private static long getModTime(BoxItem.Info file) {
             Date[] dates = {
                     file.getContentCreatedAt(),
                     file.getContentModifiedAt(),

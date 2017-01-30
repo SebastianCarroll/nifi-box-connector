@@ -78,6 +78,11 @@ public class ListBoxTest {
         testRunner.assertTransferCount(ListBox.REL_SUCCESS, 0);
     }
 
+    @Test
+    public void testAttributesCorrect() throws Exception {
+        // TODO: Complete test
+    }
+
     private class ListBoxWithMockApi extends ListBox {
         @Override
         protected BoxFolder getFolder(ProcessContext context) {
