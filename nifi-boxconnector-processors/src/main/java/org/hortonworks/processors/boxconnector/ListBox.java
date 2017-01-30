@@ -93,13 +93,15 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     }
 
     @Override
-    protected boolean isListingResetNecessary(PropertyDescriptor propertyDescriptor) {
-        return false;
+    protected boolean isListingResetNecessary(PropertyDescriptor property) {
+        return INPUT_DIRECTORY_ID.equals(property);
     }
 
     @Override
     protected Scope getStateScope(ProcessContext processContext) {
-        return null;
+        // Use cluster scope so that component can be run on Primary Node Only and can still
+        // pick up where it left off, even if the Primary Node changes.
+        return Scope.CLUSTER;
     }
 
     //////////////
@@ -122,11 +124,13 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     }
 
     private List<FileInfo> listBoxFolder(BoxFolder folder) {
+        // TODO: This logger is meaningless - will just output an class and number
         this.getLogger().debug("Listing box folder: {}", new Object[]{folder});
 
         return StreamSupport
                 // TODO: Do we want parallel := false?
                 .stream(folder.spliterator(), false)
+                // TODO: Probably should be a class method
                 .map(file -> new FileConverter(file).build())
                 .collect(Collectors.toList());
     }

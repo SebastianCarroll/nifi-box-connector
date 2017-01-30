@@ -46,11 +46,36 @@ public class ListBoxTest {
     public void testProcessor() {}
 
     @Test
-    public void testListBoxFolder() throws Exception {
+    public void testListing() throws Exception {
         testRunner.setProperty(ListBox.INPUT_DIRECTORY_ID, "10");
         testRunner.setProperty(ListBox.DEVELOPER_TOKEN, "10");
         testRunner.run();
         testRunner.assertTransferCount(ListBox.REL_SUCCESS, 2);
+    }
+
+    @Test
+    public void testReset() throws Exception {
+        testRunner.setProperty(ListBox.INPUT_DIRECTORY_ID, "10");
+        testRunner.setProperty(ListBox.DEVELOPER_TOKEN, "10");
+        testRunner.run();
+        testRunner.assertTransferCount(ListBox.REL_SUCCESS, 2);
+
+        // No change in value, no list
+        testRunner.clearTransferState();
+        testRunner.setProperty(ListBox.INPUT_DIRECTORY_ID, "10");
+        testRunner.run();
+        testRunner.assertTransferCount(ListBox.REL_SUCCESS, 0);
+
+        // A change, should list
+        testRunner.clearTransferState();
+        testRunner.setProperty(ListBox.INPUT_DIRECTORY_ID, "11");
+        testRunner.run();
+        testRunner.assertTransferCount(ListBox.REL_SUCCESS, 2);
+
+        // No change, no list
+        testRunner.clearTransferState();
+        testRunner.run();
+        testRunner.assertTransferCount(ListBox.REL_SUCCESS, 0);
     }
 
     private class ListBoxWithMockApi extends ListBox {
