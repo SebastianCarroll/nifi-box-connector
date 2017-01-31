@@ -17,6 +17,7 @@
 package org.hortonworks.processors.boxconnector;
 
 import org.apache.nifi.components.PropertyDescriptor;
+import org.apache.nifi.components.state.Scope;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.annotation.behavior.ReadsAttribute;
 import org.apache.nifi.annotation.behavior.ReadsAttributes;
@@ -34,13 +35,13 @@ import org.apache.nifi.processor.ProcessSession;
 import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processor.Relationship;
 import org.apache.nifi.processor.util.StandardValidators;
+import org.apache.nifi.processors.standard.util.FileInfo;
+import org.apache.nifi.processors.standard.AbstractListProcessor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.box.sdk.BoxAPIConnection;
 import com.box.sdk.BoxFile;
@@ -53,9 +54,7 @@ import com.box.sdk.BoxUser;
 @SeeAlso({})
 @ReadsAttributes({@ReadsAttribute(attribute="", description="")})
 @WritesAttributes({@WritesAttribute(attribute="", description="")})
-public class ListBox extends AbstractProcessor {
-
-    private ComponentLog logger;
+public class ListBox extends AbstractListProcessor<FileInfo> {
 
     public static final PropertyDescriptor INPUT_DIRECTORY_ID = new PropertyDescriptor
             .Builder().name("INPUT_DIRECTORY_ID")
@@ -73,67 +72,93 @@ public class ListBox extends AbstractProcessor {
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
-    public static final Relationship REL_SUCCESS = new Relationship.Builder()
-            .name("SUCCESS")
-            .description("All FlowFiles that are received are routed to success")
-            .build();
-
-    private List<PropertyDescriptor> descriptors;
-
-    private Set<Relationship> relationships;
-
+    //////////////
+    // Overridden abstract methods
     @Override
-    protected void init(final ProcessorInitializationContext context) {
-        logger = context.getLogger();
-
-        final List<PropertyDescriptor> descriptors = new ArrayList<PropertyDescriptor>();
-        descriptors.add(INPUT_DIRECTORY_ID);
-        descriptors.add(DEVELOPER_TOKEN);
-        this.descriptors = Collections.unmodifiableList(descriptors);
-
-        final Set<Relationship> relationships = new HashSet<Relationship>();
-        relationships.add(REL_SUCCESS);
-        this.relationships = Collections.unmodifiableSet(relationships);
+    protected Map<String, String> createAttributes(FileInfo fileInfo,
+                                                   ProcessContext processContext) {
+        // TODO: How to add the attributes here given I need info from the box folder
+        // ANS: Looks like it comes in from FileInfo
+        return new HashMap<>();
     }
 
     @Override
-    public Set<Relationship> getRelationships() {
-        return this.relationships;
+    protected String getPath(ProcessContext processContext) {
+        return null;
     }
 
     @Override
-    public final List<PropertyDescriptor> getSupportedPropertyDescriptors() {
-        return descriptors;
-    }
-
-    @OnScheduled
-    public void onScheduled(final ProcessContext context) {
-
+    protected List<FileInfo> performListing(ProcessContext context, Long minTimestamp) throws IOException {
+        BoxFolder folder = getFolder(context);
+        return listBoxFolder(folder);
     }
 
     @Override
-    public void onTrigger(final ProcessContext context, final ProcessSession session) throws ProcessException {
+    protected boolean isListingResetNecessary(PropertyDescriptor property) {
+        return INPUT_DIRECTORY_ID.equals(property);
+    }
 
-        // Call box api to list files in folder given
-        // Create flow file for each file found with the file path + name as attributes
+    @Override
+    protected Scope getStateScope(ProcessContext processContext) {
+        // Use cluster scope so that component can be run on Primary Node Only and can still
+        // pick up where it left off, even if the Primary Node changes.
+        return Scope.CLUSTER;
+    }
+
+    //////////////
+    // Overridden Standard Methods
+    @Override
+    protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
+        final List<PropertyDescriptor> properties = new ArrayList<>();
+        properties.add(DISTRIBUTED_CACHE_SERVICE);
+        properties.add(INPUT_DIRECTORY_ID);
+        properties.add(DEVELOPER_TOKEN);
+        return properties;
+    }
+
+    //////////////
+    // Helper methods
+    protected BoxFolder getFolder(ProcessContext context) {
         String token = context.getProperty(DEVELOPER_TOKEN).toString();
         BoxAPIConnection api = new BoxAPIConnection(token);
-        BoxFolder folder = new BoxFolder(api, context.getProperty(INPUT_DIRECTORY_ID).toString());
+        return new BoxFolder(api, context.getProperty(INPUT_DIRECTORY_ID).toString());
+    }
 
-        try {
-            for (BoxItem.Info itemInfo : folder) {
-                if (itemInfo instanceof BoxFile.Info) {
-                    BoxFile.Info fileInfo = (BoxFile.Info) itemInfo;
+    private List<FileInfo> listBoxFolder(BoxFolder folder) {
+        return StreamSupport
+                // TODO: Do we want parallel := false?
+                .stream(folder.spliterator(), false)
+                .map(file -> FileConverter.build(file))
+                .collect(Collectors.toList());
+    }
 
-                    FlowFile flowFile = session.create();
-                    flowFile = session.putAttribute(flowFile, "id", fileInfo.getID());
-                    flowFile = session.putAttribute(flowFile, "filename", fileInfo.getName());
-                    session.transfer(flowFile, REL_SUCCESS);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Folder not found " + e.toString());
-            session.rollback();
+    /**
+     * Helper class to encapsulate the difficulties of the
+     * BoxItem.Info class having null values
+     *
+     * TODO: Is there a way to denote all methods in a static class as static?
+     */
+    private static class FileConverter {
+        public static FileInfo build(BoxItem.Info file){
+            return new FileInfo.Builder()
+                    .filename(file.getName())
+                    .size(file.getSize())
+                    .lastModifiedTime(getModTime(file))
+                    .build();
+        }
+
+        private static long getModTime(BoxItem.Info file) {
+            Date[] dates = {
+                    file.getContentCreatedAt(),
+                    file.getContentModifiedAt(),
+                    file.getCreatedAt(),
+                    file.getModifiedAt()};
+
+            return Arrays.stream(dates)
+                    .filter(d -> (d != null))
+                    .map(d -> d.getTime())
+                    .max(Long::compareTo)
+                    .orElse(0l);
         }
     }
 }
