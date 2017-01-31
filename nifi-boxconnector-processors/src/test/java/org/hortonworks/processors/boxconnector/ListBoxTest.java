@@ -36,7 +36,6 @@ public class ListBoxTest {
 
     @Before
     public void init() {
-        //testRunner = TestRunners.newTestRunner(ListBoxWithMockApi.class);
         ListBoxWithMockApi box = new ListBoxWithMockApi();
         testRunner = TestRunners.newTestRunner(box);
         context = testRunner.getProcessContext();

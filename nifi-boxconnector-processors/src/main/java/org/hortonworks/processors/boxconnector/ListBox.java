@@ -78,6 +78,7 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     protected Map<String, String> createAttributes(FileInfo fileInfo,
                                                    ProcessContext processContext) {
         // TODO: How to add the attributes here given I need info from the box folder
+        // ANS: Looks like it comes in from FileInfo
         return new HashMap<>();
     }
 
