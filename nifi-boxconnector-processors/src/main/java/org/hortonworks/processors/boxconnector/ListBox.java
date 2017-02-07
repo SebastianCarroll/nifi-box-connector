@@ -27,6 +27,7 @@ import org.apache.nifi.annotation.lifecycle.OnScheduled;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.documentation.SeeAlso;
 import org.apache.nifi.annotation.documentation.Tags;
+import org.apache.nifi.flowfile.attributes.CoreAttributes;
 import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.AbstractProcessor;
@@ -75,11 +76,18 @@ public class ListBox extends AbstractListProcessor<FileInfo> {
     //////////////
     // Overridden abstract methods
     @Override
-    protected Map<String, String> createAttributes(FileInfo fileInfo,
-                                                   ProcessContext processContext) {
+    protected Map<String, String> createAttributes(FileInfo info,
+                                                   ProcessContext context) {
         // TODO: How to add the attributes here given I need info from the box folder
         // ANS: Looks like it comes in from FileInfo
-        return new HashMap<>();
+        // TODO: This is final in real processor. Find out why.
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put(CoreAttributes.FILENAME.key(), info.getFileName());
+        attributes.put(CoreAttributes.PATH.key(),
+                context.getProperty(INPUT_DIRECTORY_ID).getValue());
+        attributes.put("file.lastModifiedTime", String.valueOf(info.getLastModifiedTime()));
+        attributes.put("file.size", String.valueOf(info.getSize()));
+        return attributes;
     }
 
     @Override

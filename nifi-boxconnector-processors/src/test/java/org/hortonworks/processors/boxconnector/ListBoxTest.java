@@ -17,17 +17,18 @@
 package org.hortonworks.processors.boxconnector;
 
 import com.box.sdk.*;
+import org.apache.nifi.flowfile.attributes.CoreAttributes;
+import org.apache.nifi.util.MockFlowFile;
 import org.apache.nifi.util.TestRunner;
 import org.apache.nifi.util.TestRunners;
 import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.Assert;
 import org.apache.nifi.processor.ProcessContext;
+import org.junit.runners.JUnit4;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class ListBoxTest {
 
@@ -79,7 +80,28 @@ public class ListBoxTest {
 
     @Test
     public void testAttributesCorrect() throws Exception {
-        // TODO: Complete test
+        String id = "10";
+        testRunner.setProperty(ListBox.INPUT_DIRECTORY_ID, "10");
+        testRunner.setProperty(ListBox.DEVELOPER_TOKEN, "10");
+        testRunner.run();
+        testRunner.assertTransferCount(ListBox.REL_SUCCESS, 2);
+        List<MockFlowFile> files = testRunner.getFlowFilesForRelationship(ListBox.REL_SUCCESS);
+        MockFlowFile f1 = files.get(0);
+        MockFlowFile f2 = files.get(1);
+
+        Map<String, String> expected1 = new HashMap<String, String>();
+        expected1.put(CoreAttributes.FILENAME.key(), "b1");
+        expected1.put(CoreAttributes.PATH.key(), id);
+        expected1.put("file.lastModifiedTime", String.valueOf(new Date(1485786189)));
+        expected1.put("file.size", String.valueOf(10l));
+
+
+        Map<String, String> attrs =  f1.getAttributes();
+        for(String key : attrs.keySet()) {
+            String val = attrs.get(key);
+            //assert expected1.get(key) == val;
+            Assert.assertEquals("Values should be the same", expected1.get(key), val);
+        }
     }
 
     private class ListBoxWithMockApi extends ListBox {
@@ -93,7 +115,6 @@ public class ListBoxTest {
                     .add("b1", 10l, new Date(1485786189))
                     .add("b2", 11l, new Date(1485786190));
         }
-
     }
 
     private class MockBoxFolder extends BoxFolder {
